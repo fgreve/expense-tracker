@@ -56,13 +56,13 @@ export default function BudgetsPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Presupuestos - {month}/{year}</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border flex flex-wrap gap-4 items-end">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 flex flex-wrap gap-4 items-end">
         <div>
           <label className="text-sm font-medium block mb-1">Categoria</label>
           <select
             value={form.categoryId}
             onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 border dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-gray-100"
             required
           >
             <option value="">Seleccionar</option>
@@ -79,7 +79,7 @@ export default function BudgetsPage() {
             placeholder="Monto"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 border dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-gray-100"
             required
           />
         </div>
@@ -90,7 +90,7 @@ export default function BudgetsPage() {
 
       <div className="space-y-3">
         {budgets.length === 0 ? (
-          <div className="bg-white p-6 rounded-xl shadow-sm border text-gray-400 text-sm">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 text-gray-400 text-sm">
             No hay presupuestos configurados
           </div>
         ) : (
@@ -99,23 +99,23 @@ export default function BudgetsPage() {
             const pct = Math.min((spent / b.amount) * 100, 100);
             const over = spent > b.amount;
             return (
-              <div key={b.id} className="bg-white p-5 rounded-xl shadow-sm border">
+              <div key={b.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: b.category.color }} />
                     <span className="font-medium">{b.category.name}</span>
                   </div>
-                  <span className={`text-sm font-semibold ${over ? "text-red-600" : "text-gray-600"}`}>
+                  <span className={`text-sm font-semibold ${over ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-300"}`}>
                     ${spent.toFixed(2)} / ${b.amount.toFixed(2)}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                   <div
                     className={`h-3 rounded-full transition-all ${over ? "bg-red-500" : pct >= 80 ? "bg-yellow-500" : "bg-green-500"}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{Math.round(pct)}% usado</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{Math.round(pct)}% usado</p>
               </div>
             );
           })

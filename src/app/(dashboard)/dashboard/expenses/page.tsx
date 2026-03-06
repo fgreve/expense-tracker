@@ -86,7 +86,7 @@ export default function ExpensesPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Gastos</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 space-y-4">
         <h2 className="font-semibold">{editId ? "Editar Gasto" : "Nuevo Gasto"}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <input
@@ -95,7 +95,7 @@ export default function ExpensesPage() {
             placeholder="Monto"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 border dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-gray-100"
             required
           />
           <input
@@ -103,19 +103,19 @@ export default function ExpensesPage() {
             placeholder="Descripcion"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 border dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-gray-100"
             required
           />
           <input
             type="date"
             value={form.date}
             onChange={(e) => setForm({ ...form, date: e.target.value })}
-            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 border dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-gray-100"
           />
           <select
             value={form.categoryId}
             onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 border dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-gray-100"
             required
           >
             <option value="">Categoria</option>
@@ -158,20 +158,20 @@ export default function ExpensesPage() {
             )}
           </button>
           {editId && (
-            <button type="button" onClick={() => { setEditId(null); setForm({ amount: "", description: "", date: "", categoryId: "" }); }} className="px-6 py-2 bg-gray-200 rounded-lg font-medium hover:bg-gray-300">
+            <button type="button" onClick={() => { setEditId(null); setForm({ amount: "", description: "", date: "", categoryId: "" }); }} className="px-6 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-500">
               Cancelar
             </button>
           )}
         </div>
       </form>
 
-      <div className="bg-white rounded-xl shadow-sm border">
-        <div className="p-4 border-b flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700">
+        <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
           <h2 className="font-semibold">Lista de Gastos</h2>
           <select
             value={filterCat}
             onChange={(e) => setFilterCat(e.target.value)}
-            className="text-sm px-3 py-1.5 border rounded-lg outline-none"
+            className="text-sm px-3 py-1.5 border dark:border-gray-600 rounded-lg outline-none bg-white dark:bg-gray-700 dark:text-gray-100"
           >
             <option value="">Todas las categorias</option>
             {categories.map((c) => (
@@ -182,28 +182,28 @@ export default function ExpensesPage() {
         {expenses.length === 0 ? (
           <p className="p-6 text-gray-400 text-sm">No hay gastos registrados</p>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y dark:divide-gray-700">
             {expenses.map((exp) => (
-              <div key={exp.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <div key={exp.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <div className="flex items-center gap-3">
                   {exp.receipt ? (
                     <a href={exp.receipt} target="_blank" rel="noopener noreferrer">
-                      <img src={exp.receipt} alt="Recibo" className="w-10 h-10 rounded object-cover border hover:opacity-80" />
+                      <img src={exp.receipt} alt="Recibo" className="w-10 h-10 rounded object-cover border dark:border-gray-600 hover:opacity-80" />
                     </a>
                   ) : (
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: exp.category.color }} />
                   )}
                   <div>
                     <p className="font-medium">{exp.description}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {exp.category.name} - {new Date(exp.date).toLocaleDateString("es")}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-lg">${exp.amount.toFixed(2)}</span>
-                  <button onClick={() => handleEdit(exp)} className="text-sm text-indigo-600 hover:underline">Editar</button>
-                  <button onClick={() => handleDelete(exp.id)} className="text-sm text-red-500 hover:underline">Eliminar</button>
+                  <button onClick={() => handleEdit(exp)} className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Editar</button>
+                  <button onClick={() => handleDelete(exp.id)} className="text-sm text-red-500 dark:text-red-400 hover:underline">Eliminar</button>
                 </div>
               </div>
             ))}
