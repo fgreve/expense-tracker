@@ -3,13 +3,19 @@ import { cookies } from "next/headers";
 
 const JWT_SECRET = process.env.JWT_SECRET || "expense-tracker-secret-demo-key";
 
-export function signToken(payload: { id: string; email: string }) {
+interface TokenPayload {
+  id: string;
+  email: string;
+  role: string;
+}
+
+export function signToken(payload: TokenPayload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string) {
   try {
-    return jwt.verify(token, JWT_SECRET) as { id: string; email: string };
+    return jwt.verify(token, JWT_SECRET) as TokenPayload;
   } catch {
     return null;
   }

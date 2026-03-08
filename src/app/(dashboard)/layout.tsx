@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/lib/theme";
 
-const navItems = [
+const baseNavItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/expenses", label: "Gastos" },
   { href: "/dashboard/scan", label: "Escanear" },
@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggle } = useTheme();
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -32,6 +32,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   }
+
+  const navItems = user?.role === "admin"
+    ? [...baseNavItems, { href: "/dashboard/admin", label: "Admin" }]
+    : baseNavItems;
 
   if (!user) {
     return (

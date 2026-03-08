@@ -23,6 +23,11 @@ export async function GET(req: Request) {
     where.categoryId = categoryId;
   }
 
+  const scanned = url.searchParams.get("scanned");
+  if (scanned === "true") {
+    where.ocrText = { not: null };
+  }
+
   const expenses = await prisma.expense.findMany({
     where,
     include: { category: true },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fmt } from "@/lib/format";
 
 interface Category {
   id: string;
@@ -201,7 +202,7 @@ export default function ExpensesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-lg">${exp.amount.toFixed(2)}</span>
+                  <span className="font-semibold text-lg">${fmt(exp.amount)}</span>
                   <button onClick={() => handleEdit(exp)} className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Editar</button>
                   <button onClick={() => handleDelete(exp.id)} className="text-sm text-red-500 dark:text-red-400 hover:underline">Eliminar</button>
                 </div>

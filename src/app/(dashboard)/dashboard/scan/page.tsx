@@ -1,10 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fmt } from "@/lib/format";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, CartesianGrid,
+} from "recharts";
 
 interface Category {
   id: string;
   name: string;
+  color: string;
+}
+
+interface ScannedExpense {
+  id: string;
+  amount: number;
+  description: string;
+  date: string;
+  receipt: string | null;
+  ocrText: string | null;
+  category: { name: string; color: string };
 }
 
 export default function ScanPage() {
@@ -18,15 +34,24 @@ export default function ScanPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [scannedExpenses, setScannedExpenses] = useState<ScannedExpense[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  function loadScannedExpenses() {
+    fetch("/api/expenses?scanned=true")
+      .then((r) => r.json())
+      .then(setScannedExpenses);
+  }
+
   useEffect(() => {
     fetch("/api/categories").then((r) => r.json()).then(setCategories);
+    loadScannedExpenses();
   }, []);
 
   const processFile = useCallback(async (file: File) => {
-    setPreview(URL.createObjectURL(file));
+    const isPdf = file.type === "application/pdf" || file.name?.toLowerCase().endsWith(".pdf");
+    setPreview(isPdf ? "pdf" : URL.createObjectURL(file));
     setProcessing(true);
     setOcrText("");
     setSaved(false);
@@ -73,7 +98,7 @@ export default function ScanPage() {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) {
+    if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
       processFile(file);
     }
   }
@@ -107,6 +132,7 @@ export default function ScanPage() {
           setOcrText("");
           setPreview(null);
           setImageUrl(null);
+          loadScannedExpenses();
         }
       } finally {
         setSaving(false);
@@ -131,19 +157,26 @@ export default function ScanPage() {
           }`}
         >
           {preview ? (
-            <img src={preview} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+            preview === "pdf" ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="text-5xl">&#128196;</div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">PDF cargado</p>
+              </div>
+            ) : (
+              <img src={preview} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+            )
           ) : (
             <div>
               <div className="text-4xl text-gray-300 dark:text-gray-600 mb-2">&#128247;</div>
               <p className="text-gray-500 dark:text-gray-400">
-                {dragging ? "Suelta la imagen aqui" : "Click o arrastra una imagen de recibo"}
+                {dragging ? "Suelta el archivo aqui" : "Click o arrastra una imagen o PDF de recibo"}
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">JPG, PNG - Tickets, facturas, recibos</p>
-              <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-2">Procesado con GPT-4o Vision</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">JPG, PNG, PDF - Tickets, facturas, recibos</p>
+              <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-2">Procesado con GPT-4o Vision / OCR</p>
             </div>
           )}
         </div>
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+        <input ref={fileRef} type="file" accept="image/*,application/pdf" onChange={handleFile} className="hidden" />
 
         {processing && (
           <div className="mt-4 flex items-center gap-3">
@@ -226,6 +259,130 @@ export default function ScanPage() {
           </div>
         </div>
       )}
+
+      {/* Charts de gastos escaneados */}
+      {scannedExpenses.length > 0 && (() => {
+        const total = scannedExpenses.reduce((s, e) => s + e.amount, 0);
+        const byCat: Record<string, { name: string; color: string; total: number; count: number }> = {};
+        const byMonth: Record<string, number> = {};
+
+        for (const exp of scannedExpenses) {
+          const cat = exp.category.name;
+          if (!byCat[cat]) byCat[cat] = { name: cat, color: exp.category.color, total: 0, count: 0 };
+          byCat[cat].total += exp.amount;
+          byCat[cat].count += 1;
+
+          const m = exp.date.slice(0, 7);
+          byMonth[m] = (byMonth[m] || 0) + exp.amount;
+        }
+
+        const catData = Object.values(byCat).sort((a, b) => b.total - a.total);
+        const monthData = Object.entries(byMonth)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([month, amount]) => ({ month, amount }));
+
+        return (
+          <>
+            {/* Summary cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Escaneado</p>
+                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">${fmt(total)}</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Recibos Escaneados</p>
+                <p className="text-3xl font-bold">{scannedExpenses.length}</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Promedio por Recibo</p>
+                <p className="text-3xl font-bold">${fmt(total / scannedExpenses.length)}</p>
+              </div>
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
+                <h2 className="font-semibold mb-4">Escaneos por Categoria</h2>
+                <div className="flex items-center gap-4">
+                  <ResponsiveContainer width="50%" height={220}>
+                    <PieChart>
+                      <Pie data={catData} dataKey="total" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={45} strokeWidth={2}>
+                        {catData.map((c) => <Cell key={c.name} fill={c.color} />)}
+                      </Pie>
+                      <Tooltip formatter={(v) => [`$${fmt(Number(v))}`]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-2 text-sm flex-1">
+                    {catData.map((c) => {
+                      const pct = total > 0 ? Math.round((c.total / total) * 100) : 0;
+                      return (
+                        <div key={c.name} className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                          <span className="flex-1">{c.name}</span>
+                          <span className="text-gray-500 dark:text-gray-400 tabular-nums">{c.count}</span>
+                          <span className="text-gray-400 dark:text-gray-500 text-xs w-8 text-right">{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
+                <h2 className="font-semibold mb-4">Escaneos por Mes</h2>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={monthData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.5} />
+                    <YAxis tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.5} />
+                    <Tooltip
+                      formatter={(v) => [`$${fmt(Number(v))}`, "Total"]}
+                      contentStyle={{ backgroundColor: "var(--tooltip-bg, #fff)", border: "1px solid var(--tooltip-border, #e5e7eb)", borderRadius: "8px" }}
+                    />
+                    <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Lista de gastos escaneados */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700">
+              <div className="p-4 border-b dark:border-gray-700">
+                <h2 className="font-semibold">Historial de Recibos Escaneados</h2>
+              </div>
+              <div className="divide-y dark:divide-gray-700">
+                {scannedExpenses.map((exp) => (
+                  <div key={exp.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <div className="flex items-center gap-3">
+                      {exp.receipt ? (
+                        <a href={exp.receipt} target="_blank" rel="noopener noreferrer">
+                          <img src={exp.receipt} alt="Recibo" className="w-10 h-10 rounded object-cover border dark:border-gray-600" />
+                        </a>
+                      ) : (
+                        <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: exp.category.color + "20" }}>
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: exp.category.color }} />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">{exp.description}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {exp.category.name} &middot; {new Date(exp.date).toLocaleDateString("es")}
+                        </p>
+                        {exp.ocrText && (
+                          <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5 truncate max-w-xs">
+                            OCR: {exp.ocrText.slice(0, 60)}...
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="font-semibold">${fmt(exp.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -14,6 +15,7 @@ const categories = [
 ];
 
 async function main() {
+  // Seed categories
   for (const cat of categories) {
     await prisma.category.upsert({
       where: { name: cat.name },
@@ -21,7 +23,25 @@ async function main() {
       create: cat,
     });
   }
-  console.log("Seed completed: categories created");
+  console.log("Seed: categories created");
+
+  // Seed admin user
+  const adminEmail = "admin@expense.com";
+  const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (!existing) {
+    const hashed = await bcrypt.hash("admin123", 10);
+    await prisma.user.create({
+      data: {
+        email: adminEmail,
+        password: hashed,
+        name: "Administrador",
+        role: "admin",
+      },
+    });
+    console.log("Seed: admin user created (admin@expense.com / admin123)");
+  } else {
+    console.log("Seed: admin user already exists");
+  }
 }
 
 main()

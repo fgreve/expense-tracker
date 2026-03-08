@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fmt } from "@/lib/format";
 
 interface Category {
   id: string;
@@ -106,7 +107,7 @@ export default function BudgetsPage() {
                     <span className="font-medium">{b.category.name}</span>
                   </div>
                   <span className={`text-sm font-semibold ${over ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-300"}`}>
-                    ${spent.toFixed(2)} / ${b.amount.toFixed(2)}
+                    ${fmt(spent)} / ${fmt(b.amount)}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
