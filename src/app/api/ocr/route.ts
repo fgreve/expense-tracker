@@ -107,9 +107,9 @@ export async function POST(req: Request) {
     const mimeType = file.type || "image/jpeg";
     const isPdf = mimeType === "application/pdf" || file.name?.toLowerCase().endsWith(".pdf");
 
-    // Upload to Cloudinary (images only)
+    // Upload to Cloudinary (images and PDFs)
     let imageUrl: string | null = null;
-    if (!isPdf && process.env.CLOUDINARY_CLOUD_NAME) {
+    if (process.env.CLOUDINARY_CLOUD_NAME) {
       try {
         imageUrl = await uploadImage(buffer, mimeType);
       } catch (err) {

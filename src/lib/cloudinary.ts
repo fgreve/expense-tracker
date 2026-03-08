@@ -12,7 +12,7 @@ export async function uploadImage(buffer: Buffer, mimeType: string): Promise<str
 
   const result = await cloudinary.uploader.upload(dataUri, {
     folder: "expense-tracker/receipts",
-    resource_type: "image",
+    resource_type: "auto",
   });
 
   return result.secure_url;

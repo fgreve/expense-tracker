@@ -203,6 +203,17 @@ export default function ExpensesPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-lg">${fmt(exp.amount)}</span>
+                  {exp.receipt && (
+                    <a
+                      href={exp.receipt}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
+                      title="Descargar documento original"
+                    >
+                      Descargar
+                    </a>
+                  )}
                   <button onClick={() => handleEdit(exp)} className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Editar</button>
                   <button onClick={() => handleDelete(exp.id)} className="text-sm text-red-500 dark:text-red-400 hover:underline">Eliminar</button>
                 </div>

@@ -7,14 +7,32 @@ export async function GET(req: Request) {
   if (!session) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
   const url = new URL(req.url);
+  const view = url.searchParams.get("view") || "month";
   const month = Number(url.searchParams.get("month") || new Date().getMonth() + 1);
   const year = Number(url.searchParams.get("year") || new Date().getFullYear());
 
-  const startDate = new Date(Date.UTC(year, month - 1, 1));
-  const endDate = new Date(Date.UTC(year, month, 1));
+  // Build date filter
+  const where: Record<string, unknown> = { userId: session.id };
+  let filename: string;
+
+  if (view === "month") {
+    where.date = {
+      gte: new Date(Date.UTC(year, month - 1, 1)),
+      lt: new Date(Date.UTC(year, month, 1)),
+    };
+    filename = `gastos-${year}-${String(month).padStart(2, "0")}.csv`;
+  } else if (view === "year") {
+    where.date = {
+      gte: new Date(Date.UTC(year, 0, 1)),
+      lt: new Date(Date.UTC(year + 1, 0, 1)),
+    };
+    filename = `gastos-${year}.csv`;
+  } else {
+    filename = `gastos-historico.csv`;
+  }
 
   const expenses = await prisma.expense.findMany({
-    where: { userId: session.id, date: { gte: startDate, lt: endDate } },
+    where,
     include: { category: true },
     orderBy: { date: "asc" },
   });
@@ -31,12 +49,10 @@ export async function GET(req: Request) {
   const total = expenses.reduce((s, e) => s + e.amount, 0);
   const footer = `\n\nTotal,,,${Math.round(total)}`;
 
-  const csv = header + rows + footer;
-
-  return new NextResponse(csv, {
+  return new NextResponse(header + rows + footer, {
     headers: {
       "Content-Type": "text/csv",
-      "Content-Disposition": `attachment; filename="gastos-${year}-${String(month).padStart(2, "0")}.csv"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
 }
